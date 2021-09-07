@@ -267,9 +267,9 @@ server:
 ## 폴리글랏 퍼시스턴스
 - 배송(delivery) 서비스의 경우, 다른 마이크로 서비스와 달리 hsql을 구현하였다.
 - 이를 통해 서비스 간 다른 종류의 데이터베이스를 사용하여도 문제 없이 동작하여 폴리그랏 퍼시스턴스를 충족함.
-
-- 배송(delivery) 서비스의 pom.xml
 ```
+# 배송(delivery) 서비스의 pom.xml
+
 		<dependency>
 			<groupId>org.hsqldb</groupId>
 			<artifactId>hsqldb</artifactId>
@@ -342,7 +342,7 @@ http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="Ord
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
-결제가 이루어진 후에 배송(delivery) 시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
+- 결제가 이루어진 후에 배송(delivery) 시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
 - 이를 위하여 결제 서비스에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
 ```
 # 결제 서비스의 Payment.java
@@ -409,6 +409,12 @@ mvn spring-boot:run
 http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarted"으로 확인
 ```
 
+## CQRS
+- viewer 인 ordertraces 서비스를 별도로 구현하여 아래와 같이 view가 출력된다.
+- 주문 수행 후, ordertraces
+- 주문 취소 수행 후, ordertraces
+
+
 # 운영
 
 ## CI/CD 설정
@@ -443,6 +449,9 @@ mvn package
 az acr build --registry skccacr --image skccacr.azurecr.io/gateway:latest .
 ```
 
+- ACR에 정상 Push 완료
+
+
 - Kafka 설치 및 배포
 
 - Kubernetes Deployment, Service 생성
@@ -472,8 +481,9 @@ kubectl apply -f kubernetes/deployment.yml
 kubectl apply -f kubernetes/service.yaml
 ```
 
-/order/kubernetes/deployment.yml 파일
 ```
+# /order/kubernetes/deployment.yml 파일
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -499,13 +509,12 @@ spec:
 
 - 전체 deploy 완료된 모습
 
+
 ## Persistence Volume
 - 비정형 데이터를 관리하기 위해 PVC 생성 파일
-
-- pvc.yml
-  AccessModes: ReadWriteMany
-  storeageClass: azurefile
 ```
+# pvc.yml
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -519,8 +528,9 @@ spec:
       storage: 1Gi
 ```
 
-- deploymeny.yml
 ```
+# deploymeny.yml 에 volumes 정보 설정
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -545,8 +555,9 @@ spec:
           claimName: order-disk
 ```
 
-- application.yml
 ```
+# order 서비스 log 파일이 pvc 에 위치하도록 application.yml 설정
+
 logging:
   level:
     root: info
@@ -603,8 +614,7 @@ siege -c100 -t60S -r10 --content-type "application/json" 'http://localhost:8081/
 
 ## Autoscale (HPA:HorizontalPodAutoscaler)
 
-- 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다.
-- 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 주문 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
 kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
 ```
