@@ -570,22 +570,23 @@ kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
 
 - siege를 활용하여, 부하 생성한다. (30명의 동시사용자가 30초간 부하 발생)
 ```
-siege -c30 -t30S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee", "qty": 1, "cost": 1000, "status": "OrderPlaced"}'
+siege -c100 -t60S -v --content-type "application/json" 'http://order:8080/orders POST { "product": "coffee", "qty": 1, "cost" : 1000, "status" : "OrderPlaced"}'
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 ```
 kubectl get deploy order -w
 ```
-![image](https://user-images.githubusercontent.com/44763296/132342069-315f0001-4cb9-4470-997b-d7f2e311593a.png)
+![image](https://user-images.githubusercontent.com/44763296/132365903-18f79cd1-a5e3-44ee-a5ba-a9451e74d682.png)
+
 
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
-![image](https://user-images.githubusercontent.com/44763296/132342239-2b19bdd4-d9a3-446e-8e03-2bf36eed7931.png)
+![image](https://user-images.githubusercontent.com/44763296/132365797-7d5824cb-a582-48e8-8fce-cfe7b3aff800.png)
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
 
-![image](https://user-images.githubusercontent.com/44763296/132342165-ea1424f9-1342-46ba-a5e7-7851957cc061.png)
+![image](https://user-images.githubusercontent.com/44763296/132365721-57c7ba2e-7c90-45bb-a911-a0c9babe09df.png)
 
 
 ## Zero-Downtime deploy (Readiness Probe)
