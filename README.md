@@ -450,6 +450,7 @@ az acr build --registry user12acr --image user12acr.azurecr.io/gateway:latest .
 ```
 
 - ACR에 정상 Push 완료
+![image](https://user-images.githubusercontent.com/44763296/132321320-8facb0cf-d9ac-4ebd-af24-5f26aee7817f.png)
 
 
 - Kafka 설치 및 배포
