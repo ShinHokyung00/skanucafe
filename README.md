@@ -456,6 +456,9 @@ az acr build --registry user12acr --image user12acr.azurecr.io/gateway:latest .
 
 - Kafka 설치 및 배포
 
+![image](https://user-images.githubusercontent.com/44763296/132324599-b4376e1f-2147-42dc-989f-112db76689ca.png)
+
+
 - Kubernetes Deployment, Service 생성
 ```
 cd order
@@ -510,6 +513,8 @@ spec:
 ```
 
 - 전체 deploy 완료된 모습
+
+![image](https://user-images.githubusercontent.com/44763296/132324570-a9fd653e-0895-4a27-a2cb-cfe0109514ba.png)
 
 
 ## Persistence Volume
