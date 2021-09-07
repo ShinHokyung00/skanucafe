@@ -702,17 +702,18 @@ kubectl get deploy order -w
 - 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
 ```
-siege -c1 -t30S -v http://order:8080/orders
+siege -c1 -t60S -v http://order:8080/orders
 ```
 
 - Readiness가 설정되지 않은 yml 파일로 배포 진행
-```
-kubectl apply -f deployment_without_readiness.yml
-```
+
+![image](https://user-images.githubusercontent.com/44763296/132343512-d432877c-70c5-45f2-a13f-a1823741513d.png)
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
 
-- 배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
+![image](https://user-images.githubusercontent.com/44763296/132343347-01bbd608-7c77-4819-94f3-3e1f02df8155.png)
+
+- 배포기간중 Availability 가 평소 100%에서 50% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
 ```
 # deployment.yml 의 readiness probe 의 설정
 readinessProbe:
@@ -723,15 +724,16 @@ readinessProbe:
   timeoutSeconds: 2
   periodSeconds: 5
   failureThreshold: 10
-
-# deployment.yml 재배포
-kubectl apply -f deployment_with_readiness.yml
 ```
 
 - 동일한 시나리오로 재배포 한 후 Availability 확인
 - 배포 중 pod가 2개가 뜨고, 새롭게 띄운 pod가 준비될 때까지, 기존 pod가 유지됨을 확인
 
+![image](https://user-images.githubusercontent.com/44763296/132343813-c82aab51-3a5d-4c02-90ee-64361abb7cb8.png)
+
 - 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+
+![image](https://user-images.githubusercontent.com/44763296/132343875-1f75e766-ddbf-4ed0-9d2f-a740131d8d03.png)
 
 
 ## Self-healing (Liveness Probe)
@@ -750,4 +752,7 @@ kubectl apply -f deployment_with_readiness.yml
 
 - order 에 liveness가 발동되었고, 8090 포트에 응답이 없기에 Restart가 발생함
 
+![image](https://user-images.githubusercontent.com/44763296/132344822-f8392a93-21d3-4ab5-bf07-1d7321baf7de.png)
+
+![image](https://user-images.githubusercontent.com/44763296/132344859-685305b7-ddda-4187-a61f-4d47ea920d35.png)
 
