@@ -715,27 +715,61 @@ logging:
 
 - application.yml 설정
 
-- default
+- default 쪽
+```
+api:
+  url:
+    payment: http://localhost:8082
+```
 
-- docker
+- docker 쪽
+```
+api:
+  url:
+    payment: ${configurl}
+```
 
 - deployment.yml 설정
+```
+          env:
+            - name: configurl
+              valueFrom:
+                configMapKeyRef:
+                  name: apiurl
+                  key: url
+```
+
+- PaymentService.java 의 url 설정
+![image](https://user-images.githubusercontent.com/44763296/132356793-3e381a4a-d076-4e7a-8208-285b4195434d.png)
+
 
 - config map 생성 후 조회
 ```
 kubectl create configmap apiurl --from-literal=url=http://payment:8080 --from-literal=fluentd-server-ip=10.xxx.xxx.xxx
+
 kubectl get configmap apiurl -c yaml
 ```
+![image](https://user-images.githubusercontent.com/44763296/132354082-61909735-a70b-4d93-b807-f0506d99c19d.png)
 
 - 설정한 url로 주문 호출
 ```
 http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"
 ```
-- configmap 삭제 후 order 서비스 재시작
+![image](https://user-images.githubusercontent.com/44763296/132356032-c4a819a7-16cd-450f-9fea-0db0a29f607e.png)
+
+
+- configmap 의 url 을 잘 못된 값으로 수정해서 재생성 후 order 서비스 재시작
 ```
 kubectl delete configmap apiurl
+
+kubectl create configmap apiurl --from-literal=url=http://paymenttest:8080 --from-literal=fluentd-server-ip=10.xxx.xxx.xxx
+
 ```
-- configmap 삭제된 상태에서 주문 호출 오류남을 확인
+![image](https://user-images.githubusercontent.com/44763296/132357901-b45b1b2d-a48d-4bdd-9fde-a4cfb956f89c.png)
+
+- configmap 수정된 상태에서 주문 호출 오류남을 확인
+
+![image](https://user-images.githubusercontent.com/44763296/132357874-93c87e1f-6a1a-43ca-b4ff-1fd46548cdd4.png)
 
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
