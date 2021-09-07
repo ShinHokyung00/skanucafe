@@ -715,7 +715,7 @@ siege -c1 -t60S -v http://order:8080/orders
 
 - 배포기간중 Availability 가 평소 100%에서 50% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
 ```
-# deployment.yml 의 readiness probe 의 설정
+# deployment.yml 의 readiness probe 설정
 readinessProbe:
   httpGet:
     path: '/actuator/health'
@@ -737,9 +737,10 @@ readinessProbe:
 
 
 ## Self-healing (Liveness Probe)
-- order 서비스의 yml 파일에 Liveness Probe 설정을 바꾸어서, Liveness Probe 가 동작함을 확인
+- order 서비스의 deployment.yml 파일에 Liveness Probe 설정을 바꾸어서, Liveness Probe 가 동작함을 확인
 - Liveness Probe 옵션을 추가하되, 서비스 포트가 아닌 8090으로 설정, readiness probe는 미적용
 ```
+# deployment.yml 의 liveness probe 설정
         livenessProbe:
             httpGet:
               path: '/actuator/health'
