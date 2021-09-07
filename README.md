@@ -518,6 +518,7 @@ spec:
     requests:
       storage: 1Gi
 `
+
 - deploymeny.yml
 `
 apiVersion: apps/v1
@@ -605,14 +606,17 @@ Availability 가 높아진 것을 확인 (siege)
 `
 kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
 `
+
 - CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
 `
 siege -c100 -t120S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"item": "chicken"}'
 `
+
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 `
 kubectl get deploy pay -w
 `
+
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
@@ -625,10 +629,12 @@ kubectl get deploy pay -w
 `
 siege -c100 -t120S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"item": "chicken"}'
 `
+
 - 새버전으로의 배포 시작
 `
 kubectl apply -f kubernetes/deployment.yaml
 `
+
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
 
 배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
@@ -636,6 +642,7 @@ kubectl apply -f kubernetes/deployment.yaml
 # deployment.yaml 의 readiness probe 의 설정:
 kubectl apply -f kubernetes/deployment.yaml
 `
+
 - 동일한 시나리오로 재배포 한 후 Availability 확인:
 
 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
@@ -648,6 +655,7 @@ kubectl apply -f kubernetes/deployment.yaml
 - KPI: 고객에게 빠른 알림으로 고객의 편의성 향상
 - 구현계획 마이크로 서비스: customer 마이크로 서비스를 추가하여, 고객에게 빠르게 알림 서비스를 제공할 예정
 `
+
 ### 이벤트 스토밍
 
 ### 헥사고날 아키텍처 변화
