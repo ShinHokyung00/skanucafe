@@ -741,7 +741,7 @@ api:
 
 - PaymentService.java 의 url 설정
 
-![image](https://user-images.githubusercontent.com/44763296/132356793-3e381a4a-d076-4e7a-8208-285b4195434d.png)
+![image](https://user-images.githubusercontent.com/44763296/132358704-8eaf0c83-adae-4da2-8371-cd3874d8397d.png)
 
 
 - config map 생성 후 조회
@@ -814,10 +814,13 @@ hystrix:
 - 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
 - 동시사용자 100명. 60초 동안 실시
 ```
-siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee"}'
+siege -c100 -t60S -v --content-type "application/json" 'http://order:8080/orders POST { "product": "coffee", "qty": 1, "cost" : 1000, "status" : "OrderPlaced"}'
 ```
 - 부하 발생하여 CB가 발동하여 요청 실패처리하였고, 밀린 부하가 pay에서 처리되면서 다시 order를 받기 시작
 
+![image](https://user-images.githubusercontent.com/44763296/132362394-ebe02c83-4a31-4fdc-a0ce-53a4599d1b2c.png)
 
 - 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+
+![image](https://user-images.githubusercontent.com/44763296/132362553-0afac0e9-3142-40fc-ba65-4e320e900d95.png)
 
