@@ -752,7 +752,8 @@ readinessProbe:
 
 - order 에 liveness가 발동되었고, 8090 포트에 응답이 없기에 Restart가 발생함
 
-![image](https://user-images.githubusercontent.com/44763296/132344822-f8392a93-21d3-4ab5-bf07-1d7321baf7de.png)
+![image](https://user-images.githubusercontent.com/44763296/132345287-adb5beed-6623-4e27-a950-379a55b67353.png)
 
-![image](https://user-images.githubusercontent.com/44763296/132344859-685305b7-ddda-4187-a61f-4d47ea920d35.png)
+![image](https://user-images.githubusercontent.com/44763296/132345248-dfd86cee-2e80-499e-b01c-30970ba4b53e.png)
+
 
