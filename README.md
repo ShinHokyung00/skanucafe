@@ -686,10 +686,15 @@ siege -c30 -t30S -r10 --content-type "application/json" 'http://order:8080/order
 ```
 kubectl get deploy order -w
 ```
+![image](https://user-images.githubusercontent.com/44763296/132342069-315f0001-4cb9-4470-997b-d7f2e311593a.png)
 
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
+![image](https://user-images.githubusercontent.com/44763296/132342239-2b19bdd4-d9a3-446e-8e03-2bf36eed7931.png)
+
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
+
+![image](https://user-images.githubusercontent.com/44763296/132342165-ea1424f9-1342-46ba-a5e7-7851957cc061.png)
 
 
 ## 무정지 재배포 Zero-Downtime deploy (Readiness Probe)
@@ -707,7 +712,7 @@ kubectl apply -f deployment_without_readiness.yml
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
 
-배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
+- 배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
 ```
 # deployment.yml 의 readiness probe 의 설정
 readinessProbe:
