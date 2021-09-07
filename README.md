@@ -264,7 +264,8 @@ server:
 ```
 
 
-## 폴리글랏 퍼시스턴스
+## Polyglot
+
 - 배송(delivery) 서비스의 경우, 다른 마이크로 서비스와 달리 hsql을 구현하였다.
 - 이를 통해 서비스 간 다른 종류의 데이터베이스를 사용하여도 문제 없이 동작하여 폴리그랏 퍼시스턴스를 충족함.
 ```
@@ -278,7 +279,8 @@ server:
 ```
 
 
-## 동기식 호출(Req/Res 방식)과 Fallback 처리
+## 동기식 호출(Req/Resp 방식)과 Fallback 처리
+
 - 분석단계에서의 조건 중 하나로 주문(order)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
 - 결제(payment)서비스를 호출하기 위하여 Stub과 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
@@ -349,7 +351,7 @@ http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="Ord
 - 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
 
 
-## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
+## 비동기식 호출 (Pub/Sub 방식) / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
 - 결제가 이루어진 후에 배송(delivery) 시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
 - 이를 위하여 결제 서비스에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
@@ -427,6 +429,7 @@ http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarte
 
 
 ## CQRS
+
 - viewer 인 ordertraces 서비스를 별도로 구현하여 아래와 같이 view가 출력된다.
 - 주문 수행 후, ordertraces
 
@@ -439,15 +442,13 @@ http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarte
 
 # 운영
 
-## CI/CD 설정
+## Deploy / Pipeline
 - 각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 GCP를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하에 cloudbuild.yml 에 포함되었다.
 
-## Deploy / Pipeline
-
 - git에서 소스 가져오기
-`
+```
 git clone https://github.com/ShinHokyung00/skanucafe
-`
+```
 
 - Build 및 Azure Container Resistry(ACR) 에 Push 하기
 ```
@@ -514,7 +515,7 @@ kubectl apply -f kubernetes/service.yaml
 ```
 
 ```
-# /order/kubernetes/deployment.yml 파일
+# order 서비스의 deployment.yml 파일
 
 apiVersion: apps/v1
 kind: Deployment
@@ -544,6 +545,111 @@ spec:
 ![image](https://user-images.githubusercontent.com/44763296/132324570-a9fd653e-0895-4a27-a2cb-cfe0109514ba.png)
 
 
+## Autoscale (HPA:HorizontalPodAutoscaler)
+
+- 특정 수치 이상으로 사용자 요청이 증가할 경우 안정적으로 운영 할 수 있도록 HPA를 설치한다.
+
+- order 서비스에 resource 사용량을 정의한다.
+```
+# order 서비스의 resource 사용량을 deployment.yml 에 설정
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "250m"
+    limits:
+      memory: "500Mi"
+      cpu: "500m"
+```
+
+- 주문 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
+```
+kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
+```
+![image](https://user-images.githubusercontent.com/44763296/132338691-d73aa263-154e-4235-9ed3-a23c1a69f2a0.png)
+
+- siege를 활용하여, 부하 생성한다. (30명의 동시사용자가 30초간 부하 발생)
+```
+siege -c30 -t30S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee", "qty": 1, "cost": 1000, "status": "OrderPlaced"}'
+```
+
+- 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
+```
+kubectl get deploy order -w
+```
+![image](https://user-images.githubusercontent.com/44763296/132342069-315f0001-4cb9-4470-997b-d7f2e311593a.png)
+
+- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
+
+![image](https://user-images.githubusercontent.com/44763296/132342239-2b19bdd4-d9a3-446e-8e03-2bf36eed7931.png)
+
+- siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
+
+![image](https://user-images.githubusercontent.com/44763296/132342165-ea1424f9-1342-46ba-a5e7-7851957cc061.png)
+
+
+## Zero-Downtime deploy (Readiness Probe)
+
+- 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
+- seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c100 -t300S -r10 -v http://order:8080/orders
+```
+
+- Readiness가 설정되지 않은 yml 파일로 배포 진행
+
+![image](https://user-images.githubusercontent.com/44763296/132343512-d432877c-70c5-45f2-a13f-a1823741513d.png)
+
+- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+
+![image](https://user-images.githubusercontent.com/44763296/132349472-4fb2f4b3-d347-4262-974b-707b8eef600d.png)
+
+- 배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
+```
+# deployment.yml 의 readiness probe 설정
+readinessProbe:
+  httpGet:
+    path: '/actuator/health'
+    port: 8080
+  initialDelaySeconds: 10
+  timeoutSeconds: 2
+  periodSeconds: 5
+  failureThreshold: 10
+```
+
+- 동일한 시나리오로 재배포 한 후 Availability 확인
+- 배포 중 pod가 2개가 뜨고, 새롭게 띄운 pod가 준비될 때까지, 기존 pod가 유지됨을 확인
+
+![image](https://user-images.githubusercontent.com/44763296/132343813-c82aab51-3a5d-4c02-90ee-64361abb7cb8.png)
+
+- 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+
+![image](https://user-images.githubusercontent.com/44763296/132343875-1f75e766-ddbf-4ed0-9d2f-a740131d8d03.png)
+
+
+## Self-healing (Liveness Probe)
+
+- order 서비스의 deployment.yml 파일에 Liveness Probe 설정을 바꾸어서, Liveness Probe 가 동작함을 확인
+- Liveness Probe 옵션을 추가하되, 서비스 포트가 아닌 8090으로 설정, readiness probe는 미적용
+```
+# deployment.yml 의 liveness probe 설정
+        livenessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8090
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
+```
+
+- order 서비스에 liveness probe 가 발동되었고, 8090 포트에 응답이 없기에 Restart가 발생함
+
+![image](https://user-images.githubusercontent.com/44763296/132345287-adb5beed-6623-4e27-a950-379a55b67353.png)
+
+![image](https://user-images.githubusercontent.com/44763296/132345248-dfd86cee-2e80-499e-b01c-30970ba4b53e.png)
+
+
 ## Persistence Volume
 
 - 비정형 데이터를 관리하기 위해 PVC 생성 파일
@@ -565,7 +671,7 @@ spec:
 ![image](https://user-images.githubusercontent.com/44763296/132337213-50718ac7-2a70-4fdd-a663-6ab41d90baf1.png)
 
 ```
-# deploymeny.yml 에 volumes 정보 설정
+# order 서비스의 deploymeny.yml 에 volumes 정보 설정
 
 apiVersion: apps/v1
 kind: Deployment
@@ -652,109 +758,3 @@ siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orde
 
 - Retry 의 설정 (istio)
 - Availability 가 높아진 것을 확인 (siege)
-
-
-## Autoscale (HPA:HorizontalPodAutoscaler)
-
-- 특정 수치 이상으로 사용자 요청이 증가할 경우 안정적으로 운영 할 수 있도록 HPA를 설치한다.
-
-- order 서비스에 resource 사용량을 정의한다.
-```
-# order/kubernetes/deployment.yml 설정
-
-  resources:
-    requests:
-      memory: "64Mi"
-      cpu: "250m"
-    limits:
-      memory: "500Mi"
-      cpu: "500m"
-```
-
-- 주문 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
-```
-kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
-```
-![image](https://user-images.githubusercontent.com/44763296/132338691-d73aa263-154e-4235-9ed3-a23c1a69f2a0.png)
-
-- siege를 활용하여, 부하 생성한다. (30명의 동시사용자가 30초간 부하 발생)
-```
-siege -c30 -t30S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee", "qty": 1, "cost": 1000, "status": "OrderPlaced"}'
-```
-
-- 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
-```
-kubectl get deploy order -w
-```
-![image](https://user-images.githubusercontent.com/44763296/132342069-315f0001-4cb9-4470-997b-d7f2e311593a.png)
-
-- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
-
-![image](https://user-images.githubusercontent.com/44763296/132342239-2b19bdd4-d9a3-446e-8e03-2bf36eed7931.png)
-
-- siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
-
-![image](https://user-images.githubusercontent.com/44763296/132342165-ea1424f9-1342-46ba-a5e7-7851957cc061.png)
-
-
-## 무정지 재배포 Zero-Downtime deploy (Readiness Probe)
-
-- 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
-- seige 로 배포작업 직전에 워크로드를 모니터링 함.
-```
-siege -c1 -t60S -v http://order:8080/orders
-```
-
-- Readiness가 설정되지 않은 yml 파일로 배포 진행
-
-![image](https://user-images.githubusercontent.com/44763296/132343512-d432877c-70c5-45f2-a13f-a1823741513d.png)
-
-- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
-
-![image](https://user-images.githubusercontent.com/44763296/132343347-01bbd608-7c77-4819-94f3-3e1f02df8155.png)
-
-- 배포기간중 Availability 가 평소 100%에서 50% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
-```
-# deployment.yml 의 readiness probe 설정
-readinessProbe:
-  httpGet:
-    path: '/actuator/health'
-    port: 8080
-  initialDelaySeconds: 10
-  timeoutSeconds: 2
-  periodSeconds: 5
-  failureThreshold: 10
-```
-
-- 동일한 시나리오로 재배포 한 후 Availability 확인
-- 배포 중 pod가 2개가 뜨고, 새롭게 띄운 pod가 준비될 때까지, 기존 pod가 유지됨을 확인
-
-![image](https://user-images.githubusercontent.com/44763296/132343813-c82aab51-3a5d-4c02-90ee-64361abb7cb8.png)
-
-- 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
-
-![image](https://user-images.githubusercontent.com/44763296/132343875-1f75e766-ddbf-4ed0-9d2f-a740131d8d03.png)
-
-
-## Self-healing (Liveness Probe)
-- order 서비스의 deployment.yml 파일에 Liveness Probe 설정을 바꾸어서, Liveness Probe 가 동작함을 확인
-- Liveness Probe 옵션을 추가하되, 서비스 포트가 아닌 8090으로 설정, readiness probe는 미적용
-```
-# deployment.yml 의 liveness probe 설정
-        livenessProbe:
-            httpGet:
-              path: '/actuator/health'
-              port: 8090
-            initialDelaySeconds: 5
-            timeoutSeconds: 2
-            periodSeconds: 5
-            failureThreshold: 5
-```
-
-- order 에 liveness가 발동되었고, 8090 포트에 응답이 없기에 Restart가 발생함
-
-![image](https://user-images.githubusercontent.com/44763296/132345287-adb5beed-6623-4e27-a950-379a55b67353.png)
-
-![image](https://user-images.githubusercontent.com/44763296/132345248-dfd86cee-2e80-499e-b01c-30970ba4b53e.png)
-
-
