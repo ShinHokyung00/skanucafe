@@ -426,27 +426,27 @@ http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarte
 ```
 cd order
 mvn package
-az acr build --registry skccacr --image skccacr.azurecr.io/order:latest .
+az acr build --registry user12acr --image user12acr.azurecr.io/order:latest .
 
 cd ../payment
 mvn package
-az acr build --registry skccacr --image skccacr.azurecr.io/payment:latest .
+az acr build --registry user12acr --image user12acr.azurecr.io/payment:latest .
 
 cd ../delivery
 mvn package
-az acr build --registry skccacr --image skccacr.azurecr.io/delivery:latest .
+az acr build --registry user12acr --image user12acr.azurecr.io/delivery:latest .
 
 cd ../ordertrace
 mvn package
-az acr build --registry skccacr --image skccacr.azurecr.io/ordertrace:latest .
+az acr build --registry user12acr --image user12acr.azurecr.io/ordertrace:latest .
 
 cd ../message
 mvn package
-az acr build --registry skccacr --image skccacr.azurecr.io/message:latest .
+az acr build --registry user12acr --image user12acr.azurecr.io/message:latest .
 
 cd ../gateway
 mvn package
-az acr build --registry skccacr --image skccacr.azurecr.io/gateway:latest .
+az acr build --registry user12acr --image user12acr.azurecr.io/gateway:latest .
 ```
 
 - ACR에 정상 Push 완료
