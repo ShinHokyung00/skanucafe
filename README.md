@@ -325,16 +325,16 @@ public interface PaymentService {
 # 결제(payment) 서비스를 잠시 내려놓음 (ctrl+c)
 
 # 주문처리
-http post http://localhost:8088/orders product="Coffee" qty=1 cost=1000 status="OrderPlaced"   #Fail
-http post http://localhost:8088/orders product="Tea" qty=2 cost=2000 status="OrderPlaced"      #Fail
+http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"   #Fail
+http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Fail
 
 # 결제 서비스 재기동
 cd payment
 mvn spring-boot:run
 
 # 주문처리
-http post http://localhost:8088/orders product="Coffee" qty=1 cost=1000 status="OrderPlaced"   #Success
-http post http://localhost:8088/orders product="Tea" qty=2 cost=2000 status="OrderPlaced"      #Success
+http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"   #Success
+http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Success
 ```
 
 - 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
@@ -395,8 +395,8 @@ public class PolicyHandler{
 #  배송 서비스를 잠시 내려놓음 (ctrl+c)
 
 #주문처리
-http post http://localhost:8088/orders product="Coffee" qty=1 cost=1000 status="OrderPlaced"   #Success
-http post http://localhost:8088/orders product="Tea" qty=2 cost=2000 status="OrderPlaced"      #Success
+http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"   #Success
+http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Success
 
 #주문상태 확인
 http localhost:8080/orderTraces     # 주문상태 안바뀜 확인
@@ -593,7 +593,7 @@ hystrix:
 - 동시사용자 100명
 - 60초 동안 실시
 ```
-siege -c100 -t60S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"item": "chicken"}'
+siege -c100 -t60S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"product": "coffee
 ```
 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
@@ -675,21 +675,5 @@ kubectl apply -f kubernetes/deployment.yaml
 ```
 
 - order 에 liveness가 발동되었고, 8090 포트에 응답이 없기에 Restart가 발생함
-
-
-
-## 신규 개발 조직의 추가
-
-### 마케팅팀의 추가
-```
-- KPI: 고객에게 빠른 알림으로 고객의 편의성 향상
-- 구현계획 마이크로 서비스: customer 마이크로 서비스를 추가하여, 고객에게 빠르게 알림 서비스를 제공할 예정
-```
-
-### 이벤트 스토밍
-
-### 헥사고날 아키텍처 변화
-
-## 구현
 
 
