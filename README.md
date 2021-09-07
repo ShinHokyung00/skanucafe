@@ -711,6 +711,32 @@ logging:
 ![image](https://user-images.githubusercontent.com/44763296/132337844-2c0c2ffa-a202-428f-9888-bbcb78d47108.png)
 
 
+## Config Map
+
+- application.yml 설정
+
+- default
+
+- docker
+
+- deployment.yml 설정
+
+- config map 생성 후 조회
+```
+kubectl create configmap apiurl --from-literal=url=http://payment:8080 --from-literal=fluentd-server-ip=10.xxx.xxx.xxx
+kubectl get configmap apiurl -c yaml
+```
+
+- 설정한 url로 주문 호출
+```
+http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"
+```
+- configmap 삭제 후 order 서비스 재시작
+```
+kubectl delete configmap apiurl
+```
+- configmap 삭제된 상태에서 주문 호출 오류남을 확인
+
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
 
@@ -719,19 +745,19 @@ logging:
 
 - Hystrix 를 설정: 요청처리 쓰레드에서 처리시간이 610 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
 ```
-# application.yml
+# order 서비스의 application.yml 설정
+
 feign:
   hystrix:
     enabled: true
     
 hystrix:
   command:
-    # 전역설정
     default:
       execution.isolation.thread.timeoutInMilliseconds: 610
 ```
 
-- 피호출 서비스(결제:payment) 의 임의 부하 처리 - 400 밀리에서 증감 220 밀리 정도 왔다갔다 하게
+- 피호출 서비스(결제:payment) 의 임의 부하 처리 - 400 밀리에서 증감 220 밀리 정도 왔다갔다 하게 수정
 ```
 # 결제의 Payment.java (Entity)
 
@@ -749,12 +775,12 @@ hystrix:
 ```
 
 - 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
-- 동시사용자 100명
-- 60초 동안 실시
+- 동시사용자 100명. 60초 동안 실시
 ```
 siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee"}'
 ```
-운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+- 부하 발생하여 CB가 발동하여 요청 실패처리하였고, 밀린 부하가 pay에서 처리되면서 다시 order를 받기 시작
 
-- Retry 의 설정 (istio)
-- Availability 가 높아진 것을 확인 (siege)
+
+- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+
