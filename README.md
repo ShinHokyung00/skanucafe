@@ -429,7 +429,12 @@ http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarte
 ## CQRS
 - viewer 인 ordertraces 서비스를 별도로 구현하여 아래와 같이 view가 출력된다.
 - 주문 수행 후, ordertraces
+
+![image](https://user-images.githubusercontent.com/44763296/132335333-edac89f2-dfe8-4383-95e3-df812d423c83.png)
+
 - 주문 취소 수행 후, ordertraces
+
+![image](https://user-images.githubusercontent.com/44763296/132335464-a157e734-c4da-4f4e-bcbe-7589617c5552.png)
 
 
 # 운영
@@ -438,6 +443,11 @@ http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarte
 - 각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 GCP를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하에 cloudbuild.yml 에 포함되었다.
 
 ## Deploy / Pipeline
+
+- git에서 소스 가져오기
+`
+git clone https://github.com/ShinHokyung00/skanucafe
+`
 
 - Build 및 Azure Container Resistry(ACR) 에 Push 하기
 ```
@@ -524,7 +534,7 @@ spec:
     spec:
       containers:
         - name: order
-          image: user12.azurecr.io/order:latest
+          image: user12acr.azurecr.io/order:latest
           ports:
             - containerPort: 8080
 ```
@@ -535,6 +545,7 @@ spec:
 
 
 ## Persistence Volume
+
 - 비정형 데이터를 관리하기 위해 PVC 생성 파일
 ```
 # pvc.yml
@@ -587,6 +598,8 @@ logging:
     root: info
   file: /mnt/azure/logs/order.log
 ```
+- order 로그 확인
+
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
 
