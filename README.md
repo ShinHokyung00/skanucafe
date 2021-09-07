@@ -577,10 +577,9 @@ siege -c100 -t60S -v --content-type "application/json" 'http://order:8080/orders
 ```
 kubectl get deploy order -w
 ```
-![image](https://user-images.githubusercontent.com/44763296/132365903-18f79cd1-a5e3-44ee-a5ba-a9451e74d682.png)
+![image](https://user-images.githubusercontent.com/44763296/132366242-3e3de9eb-aeb5-44a0-b33c-c366eec0fbea.png)
 
-
-- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
+- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다.
 
 ![image](https://user-images.githubusercontent.com/44763296/132365797-7d5824cb-a582-48e8-8fce-cfe7b3aff800.png)
 
