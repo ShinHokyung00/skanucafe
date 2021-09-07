@@ -288,6 +288,7 @@ server:
 package skanucafe.external;
 
 @FeignClient(name="payment", url="http://localhost:8088")
+// @FeignClient(name="payment", url="http://payment:8080")
 public interface PaymentService {
     @RequestMapping(method= RequestMethod.POST, path="/payments")
     public void approvePayment(@RequestBody Payment payment);
@@ -327,7 +328,11 @@ public interface PaymentService {
 # 주문처리
 http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"   #Fail
 http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Fail
+```
 
+![image](https://user-images.githubusercontent.com/44763296/132333751-d7c0bed0-07db-43fe-960f-d2b24809f4ff.png)
+
+```
 # 결제 서비스 재기동
 cd payment
 mvn spring-boot:run
@@ -336,6 +341,10 @@ mvn spring-boot:run
 http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"   #Success
 http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Success
 ```
+
+![image](https://user-images.githubusercontent.com/44763296/132333938-b6de8d15-c8b7-4c35-9896-f633a97ef6e3.png)
+
+
 
 - 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
 
@@ -399,8 +408,13 @@ http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="
 http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Success
 
 #주문상태 확인
-http localhost:8080/orderTraces     # 주문상태 안바뀜 확인
+http localhost:8080/orderTraces     # 주문상태 배송시작으로 안바뀜 확인
+```
 
+![image](https://user-images.githubusercontent.com/44763296/132334856-d35db031-6758-4a08-9532-0c0cc3c47903.png)
+
+
+```
 #배송 서비스 기동
 cd delivery
 mvn spring-boot:run
@@ -408,6 +422,9 @@ mvn spring-boot:run
 #주문상태 확인
 http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarted"으로 확인
 ```
+
+![image](https://user-images.githubusercontent.com/44763296/132334787-668cc0e5-ade6-4a68-90d2-617560cfc358.png)
+
 
 ## CQRS
 - viewer 인 ordertraces 서비스를 별도로 구현하여 아래와 같이 view가 출력된다.
