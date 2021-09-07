@@ -740,6 +740,7 @@ api:
 ```
 
 - PaymentService.java 의 url 설정
+
 ![image](https://user-images.githubusercontent.com/44763296/132356793-3e381a4a-d076-4e7a-8208-285b4195434d.png)
 
 
@@ -753,7 +754,7 @@ kubectl get configmap apiurl -c yaml
 
 - 설정한 url로 주문 호출
 ```
-http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"
+http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"    #Success
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132356032-c4a819a7-16cd-450f-9fea-0db0a29f607e.png)
 
@@ -768,7 +769,9 @@ kubectl create configmap apiurl --from-literal=url=http://paymenttest:8080 --fro
 ![image](https://user-images.githubusercontent.com/44763296/132357901-b45b1b2d-a48d-4bdd-9fde-a4cfb956f89c.png)
 
 - configmap 수정된 상태에서 주문 호출 오류남을 확인
-
+```
+http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"    #Fail
+```
 ![image](https://user-images.githubusercontent.com/44763296/132357874-93c87e1f-6a1a-43ca-b4ff-1fd46548cdd4.png)
 
 
