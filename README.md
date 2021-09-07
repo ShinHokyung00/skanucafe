@@ -602,7 +602,8 @@ logging:
 ```
 - order 로그 확인
 
-![image](https://user-images.githubusercontent.com/44763296/132337183-df49d951-5383-4e8d-ac2e-8e8f20fa3399.png)
+![image](https://user-images.githubusercontent.com/44763296/132337844-2c0c2ffa-a202-428f-9888-bbcb78d47108.png)
+
 
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
@@ -645,7 +646,7 @@ hystrix:
 - 동시사용자 100명
 - 60초 동안 실시
 ```
-siege -c100 -t60S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"product": "coffee
+siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee"}'
 ```
 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
@@ -655,14 +656,30 @@ siege -c100 -t60S -r10 --content-type "application/json" 'http://localhost:8081/
 
 ## Autoscale (HPA:HorizontalPodAutoscaler)
 
+- 특정 수치 이상으로 사용자 요청이 증가할 경우 안정적으로 운영 할 수 있도록 HPA를 설치한다.
+
+- order 서비스에 resource 사용량을 정의한다.
+```
+# order/kubernetes/deployment.yml 설정
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "250m"
+    limits:
+      memory: "500Mi"
+      cpu: "500m"
+```
+
 - 주문 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
 kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
 ```
+![image](https://user-images.githubusercontent.com/44763296/132338691-d73aa263-154e-4235-9ed3-a23c1a69f2a0.png)
 
-- CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
+- siege를 활용하여, 부하 생성한다. (30명의 동시사용자가 30초간 부하 발생)
 ```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"product": "coffee"}'
+siege -c30 -t30S -r10 --content-type "application/json" 'http://order:8080/orders POST {"product": "coffee", "qty": 1, "cost": 1000, "status": "OrderPlaced"}'
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
@@ -680,19 +697,19 @@ kubectl get deploy order -w
 - 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
 ```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"product": "coffee"}'
+siege -c1 -t30S -v http://order:8080/orders
 ```
 
-- 새버전으로의 배포 시작
+- Readiness가 설정되지 않은 yml 파일로 배포 진행
 ```
-kubectl apply -f kubernetes/deployment.yaml
+kubectl apply -f deployment_without_readiness.yml
 ```
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
 
-배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
+배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
 ```
-# deployment.yaml 의 readiness probe 의 설정
+# deployment.yml 의 readiness probe 의 설정
 readinessProbe:
   httpGet:
     path: '/actuator/health'
@@ -702,13 +719,14 @@ readinessProbe:
   periodSeconds: 5
   failureThreshold: 10
 
-# deployment.yaml 재배포
-kubectl apply -f kubernetes/deployment.yaml
+# deployment.yml 재배포
+kubectl apply -f deployment_with_readiness.yml
 ```
 
 - 동일한 시나리오로 재배포 한 후 Availability 확인
+- 배포 중 pod가 2개가 뜨고, 새롭게 띄운 pod가 준비될 때까지, 기존 pod가 유지됨을 확인
 
-배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+- 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
 
 ## Self-healing (Liveness Probe)
