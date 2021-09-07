@@ -562,6 +562,7 @@ spec:
     requests:
       storage: 1Gi
 ```
+![image](https://user-images.githubusercontent.com/44763296/132337213-50718ac7-2a70-4fdd-a663-6ab41d90baf1.png)
 
 ```
 # deploymeny.yml 에 volumes 정보 설정
@@ -589,6 +590,7 @@ spec:
         persistentVolumeClaim:
           claimName: order-disk
 ```
+![image](https://user-images.githubusercontent.com/44763296/132337484-b77a440a-b9c1-4fe9-874d-68d1ba52ae60.png)
 
 ```
 # order 서비스 log 파일이 pvc 에 위치하도록 application.yml 설정
@@ -599,6 +601,8 @@ logging:
   file: /mnt/azure/logs/order.log
 ```
 - order 로그 확인
+
+![image](https://user-images.githubusercontent.com/44763296/132337183-df49d951-5383-4e8d-ac2e-8e8f20fa3399.png)
 
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
