@@ -752,7 +752,7 @@ kubectl apply -f pvc.xml
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132337213-50718ac7-2a70-4fdd-a663-6ab41d90baf1.png)
 
-- order 서비스의 deploymeny.yml 설정
+- order 서비스의 deployment.yml 설정
 ```
           volumeMounts:
             - name: volume
@@ -781,23 +781,21 @@ logging:
 
 ## Config Map
 
-- application.yml 설정
-
-- default 쪽
+- order 서비스의 application.yml 설정
 ```
+# default 영역
 api:
   url:
     payment: http://localhost:8082
-```
+....
 
-- docker 쪽
-```
+# docker 영역
 api:
   url:
     payment: ${configurl}
 ```
 
-- deployment.yml 설정
+- order 서비스의 deployment.yml 설정
 ```
           env:
             - name: configurl
@@ -812,7 +810,7 @@ api:
 ![image](https://user-images.githubusercontent.com/44763296/132358704-8eaf0c83-adae-4da2-8371-cd3874d8397d.png)
 
 
-- config map 생성 후 조회
+- config map 생성
 ```
 kubectl create configmap apiurl --from-literal=url=http://payment:8080 --from-literal=fluentd-server-ip=10.xxx.xxx.xxx
 
@@ -827,7 +825,7 @@ http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="Orde
 ![image](https://user-images.githubusercontent.com/44763296/132356032-c4a819a7-16cd-450f-9fea-0db0a29f607e.png)
 
 
-- 기존 configmap을 삭제. configmap 의 url 을 잘 못된 값으로 수정해서 재생성 후 order 서비스 재시작
+- 기존 configmap을 삭제. configmap 의 url 을 잘 못된 값으로 수정해서 재생성 및 order 서비스 재배포
 ```
 kubectl delete configmap apiurl
 
