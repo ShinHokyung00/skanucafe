@@ -46,22 +46,22 @@
 - 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n, 8088 이다)
 
 ```
-   cd order
+   cd ../order
    mvn spring-boot:run
 
-   cd payment
+   cd ../payment
    mvn spring-boot:run
 
-   cd delivery
+   cd ../delivery
    mvn spring-boot:run
 
-   cd ordertrace
+   cd ../ordertrace
    mvn spring-boot:run
 
-   cd message
+   cd ../message
    mvn spring-boot:run
    
-   cd gateway
+   cd ../gateway
    mvn spring-boot:run
 ```
 
@@ -509,6 +509,8 @@ git clone https://github.com/ShinHokyung00/skanucafe
 
 - Build 및 Azure Container Resistry(ACR) 에 Push 하기
 ```
+cd /home/project/personal/skanucafe
+
 cd order
 mvn package
 az acr build --registry user12acr --image user12acr.azurecr.io/order:latest .
@@ -546,6 +548,8 @@ az acr build --registry user12acr --image user12acr.azurecr.io/gateway:latest .
 
 - Kubernetes Deployment, Service 생성
 ```
+cd /home/project/personal/skanucafe
+
 cd order
 kubectl apply -f kubernetes/deployment.yml
 kubectl apply -f kubernetes/service.yaml
@@ -619,24 +623,24 @@ spec:
       cpu: "500m"
 ```
 
-- 주문 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 주문 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다.
 ```
 kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132338691-d73aa263-154e-4235-9ed3-a23c1a69f2a0.png)
 
-- siege를 활용하여, 부하 생성한다. (30명의 동시사용자가 30초간 부하 발생)
+- siege를 활용하여, 부하 생성한다. (100명의 동시사용자가 60초간 부하 발생)
 ```
 siege -c100 -t60S -v --content-type "application/json" 'http://order:8080/orders POST { "product": "coffee", "qty": 1, "cost" : 1000, "status" : "OrderPlaced"}'
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 ```
-kubectl get deploy order -w
+kubectl get pod order -w
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132366242-3e3de9eb-aeb5-44a0-b33c-c366eec0fbea.png)
 
-- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다.
+- 어느정도 시간이 흐른 후 스케일 아웃이 벌어지는 것을 확인할 수 있다.
 
 ![image](https://user-images.githubusercontent.com/44763296/132365797-7d5824cb-a582-48e8-8fce-cfe7b3aff800.png)
 
@@ -650,7 +654,7 @@ kubectl get deploy order -w
 - 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
 ```
-siege -c100 -t300S -r10 -v http://order:8080/orders
+siege -c100 -t60S -r10 -v http://order:8080/orders
 ```
 
 - Readiness가 설정되지 않은 yml 파일로 배포 진행
@@ -816,7 +820,7 @@ http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="Orde
 ![image](https://user-images.githubusercontent.com/44763296/132356032-c4a819a7-16cd-450f-9fea-0db0a29f607e.png)
 
 
-- configmap 의 url 을 잘 못된 값으로 수정해서 재생성 후 order 서비스 재시작
+- 기존 configmap을 삭제. configmap 의 url 을 잘 못된 값으로 수정해서 재생성 후 order 서비스 재시작
 ```
 kubectl delete configmap apiurl
 
@@ -832,12 +836,12 @@ http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="Orde
 ![image](https://user-images.githubusercontent.com/44763296/132357874-93c87e1f-6a1a-43ca-b4ff-1fd46548cdd4.png)
 
 
-## 동기식 호출 / 서킷 브레이킹 / 장애격리
+## 동기식 호출 / 서킷 브레이킹 (Circuit Breaker) / 장애격리
 
 - 서킷 브레이킹 프레임워크의 선택: Spring FeignClient + Hystrix 옵션을 사용하여 구현함
 - 시나리오는 주문(order)-->결제(payment) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 결제 요청이 과도할 경우 CB 를 통하여 장애격리.
 
-- Hystrix 를 설정: 요청처리 쓰레드에서 처리시간이 610 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
+- Hystrix 를 설정: 요청처리 쓰레드에서 처리시간이 610 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 설정 (요청을 빠르게 실패처리, 차단)
 ```
 # order 서비스의 application.yml 설정
 
@@ -857,7 +861,7 @@ hystrix:
 
     @PrePersist
     public void onPrePersist(){
-        //결제이력을 저장전 적당한 시간 끌기
+        //결제이력을 저장하기 전 적당한 시간 끌기
         try {
             Thread.currentThread().sleep((long) (400 + Math.random() * 210));
         } catch (InterruptedException e) {
@@ -875,7 +879,7 @@ siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders 
 
 ![image](https://user-images.githubusercontent.com/44763296/132362394-ebe02c83-4a31-4fdc-a0ce-53a4599d1b2c.png)
 
-- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 78% 가 성공하였고, 22%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 78% 가 성공하였고, 22%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가, HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
 ![image](https://user-images.githubusercontent.com/44763296/132371134-903a2511-a1dd-444f-9bab-1508abfecd68.png)
 
