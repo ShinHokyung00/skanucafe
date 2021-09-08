@@ -729,9 +729,9 @@ readinessProbe:
 
 ## Persistence Volume
 
-- 비정형 데이터를 관리하기 위해 PVC 생성 파일
+- 비정형 데이터를 관리하기 위해 PVC 생성 파일 및 배포
 ```
-# pvc.yml
+# pvc.yml 파일 생성
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -744,27 +744,16 @@ spec:
   resources:
     requests:
       storage: 1Gi
+
+```
+```
+# pvc.yml 배포
+kubectl apply -f pvc.xml
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132337213-50718ac7-2a70-4fdd-a663-6ab41d90baf1.png)
 
 ```
-# order 서비스의 deploymeny.yml 에 volumes 정보 설정
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order
-  labels:
-    app: order
-spec:
-  replicas: 1
-  -- 생략 --
-  template:
-  -- 생략 --
-    spec:
-      containers:
-        - name: order
-        -- 생략 --
+# order 서비스의 deploymeny.yml 설정
           volumeMounts:
             - name: volume
               mountPath: "/mnt/azure"
@@ -773,6 +762,8 @@ spec:
         persistentVolumeClaim:
           claimName: order-disk
 ```
+![image](https://user-images.githubusercontent.com/44763296/132442541-76c46167-3df7-4d8e-b279-8ae88ff01dca.png)
+
 ![image](https://user-images.githubusercontent.com/44763296/132337484-b77a440a-b9c1-4fe9-874d-68d1ba52ae60.png)
 
 ```
