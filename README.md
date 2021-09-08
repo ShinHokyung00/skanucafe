@@ -244,9 +244,11 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
 
 - 주문 수행 결과
 
-![image](https://user-images.githubusercontent.com/44763296/132428533-1fcefcd7-f6f3-45fd-ac48-8aa831f1bfec.png)
+![image](https://user-images.githubusercontent.com/44763296/132435197-23800537-da8b-4cde-8ae1-667e84481220.png)
 
-![image](https://user-images.githubusercontent.com/44763296/132428553-7330bd6b-f40e-4efe-a88e-fd5a9ff71e21.png)
+![image](https://user-images.githubusercontent.com/44763296/132435278-2040c167-f995-49e7-8d85-77b8a97e38ad.png)
+
+![image](https://user-images.githubusercontent.com/44763296/132435220-3ce8c175-c6b0-440d-8d7f-26392a39310c.png)
 
 
 ## Gateway 적용
