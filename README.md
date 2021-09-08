@@ -27,15 +27,43 @@
 # 분석/설계
 ## Event Storming 결과
 
+- MSAEz 로 모델링한 이벤트스토밍 결과:
+ 
+http://labs.msaez.io/#/storming/ByJbvQMAccMKLk9QREWBQ5MCaLU2/a14480f93a393edafa2c28c2713b4c41
+
 ### 이벤트 도출
+![image](https://user-images.githubusercontent.com/79756040/129881425-3b9d3209-16b3-4d8a-a565-c82a85056980.png)
+
 ### 부적격 이벤트 탈락
+![image](https://user-images.githubusercontent.com/79756040/129881872-bfa9ddb8-1e01-4885-b688-8a68d9770db4.png)
+
 ### 완성된 1차 모형
+![image](https://user-images.githubusercontent.com/79756040/129881929-c6d1f38e-4115-4b5c-b650-4573852f9dd6.png)
 
 ### 완성된 최종 모형 ( 시나리오 점검 후 )
+![image](https://user-images.githubusercontent.com/79756040/130614202-d1ddaef6-466f-436f-a4a3-51714383d43a.png)
+
+
+### 신규 개발 조직의 추가
+https://user-images.githubusercontent.com/487999/79684133-1d6c4300-826a-11ea-94a2-602e61814ebf.png
+
+- 마케팅팀의 추가
+```
+- KPI: 결제, 배송 정보 알림으로 고객 편의성 증대
+- 구현계획 마이크로 서비스: message 서비스를 추가하며, 고객에게 결제, 배송 메시지 전송 서비스를 제공할 예정
+```
+
+### 완성된 최종 모형
+
+- message 서비스 추가
+
 ![image](https://user-images.githubusercontent.com/44763296/132294391-af6c28d1-a389-483e-8b65-45708b2c9635.png)
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
+
+https://user-images.githubusercontent.com/79756040/130914262-ec9dd0ea-0f13-4195-befd-566cb4de2620.png
+
 ```
 - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
 - 호출관계에서 Pub/Sub 과 Req/Resp 를 구분함
