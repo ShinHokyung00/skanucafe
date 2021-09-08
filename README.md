@@ -32,10 +32,10 @@
  
 http://labs.msaez.io/#/storming/ByJbvQMAccMKLk9QREWBQ5MCaLU2/a14480f93a393edafa2c28c2713b4c41
 
-### 완성된 최종 모형 - 기존 모형
+### 그룹 평가 시 사용한 기존 모형
 ![image](https://user-images.githubusercontent.com/79756040/130614202-d1ddaef6-466f-436f-a4a3-51714383d43a.png)
 
-### 완성된 최종 모형 - 신규 서비스 추가
+### 서비스 추가한 완성된 최종 모형
 
 - message 서비스 추가
 ```
