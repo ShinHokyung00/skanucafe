@@ -44,19 +44,13 @@ http://labs.msaez.io/#/storming/ByJbvQMAccMKLk9QREWBQ5MCaLU2/a14480f93a393edafa2
 ### 완성된 최종 모형 ( 시나리오 점검 후 )
 ![image](https://user-images.githubusercontent.com/79756040/130614202-d1ddaef6-466f-436f-a4a3-51714383d43a.png)
 
+### 완성된 최종 모형
 
-### 신규 개발 조직의 추가
-![image](https://user-images.githubusercontent.com/487999/79684133-1d6c4300-826a-11ea-94a2-602e61814ebf.png)
-
-- 마케팅팀의 추가
+- message 서비스 추가
 ```
 - KPI: 결제, 배송 정보 알림으로 고객 편의성 증대
 - 구현계획 마이크로 서비스: message 서비스를 추가하며, 고객에게 결제, 배송 메시지 전송 서비스를 제공할 예정
 ```
-
-### 완성된 최종 모형
-
-- message 서비스 추가
 
 ![image](https://user-images.githubusercontent.com/44763296/132294391-af6c28d1-a389-483e-8b65-45708b2c9635.png)
 
