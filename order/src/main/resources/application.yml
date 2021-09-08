@@ -38,6 +38,9 @@ logging:
     org.springframework.cloud: debug
 server:
   port: 8081
+api:
+  url:
+    payment: http://localhost:8082
 ---
 
 spring:
@@ -63,3 +66,21 @@ spring:
         event-out:
           destination: skanucafe
           contentType: application/json
+# Persistence Volume
+# logging:
+#   level:
+#     root: info
+#   file: /mnt/azure/logs/order.log
+# Circuit Breaker
+# feign:
+#   hystrix:
+#     enabled: true
+# hystrix:
+#   command:
+#     default:
+#       execution.isolation.thread.timeoutInMilliseconds: 610
+# Congig Map
+api:
+  url:
+    # payment: ${configurl}
+      payment: http://localhost:8088

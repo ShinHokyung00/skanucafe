@@ -23,7 +23,7 @@ spring:
         - id: ordertrace
           uri: http://localhost:8084
           predicates:
-            - Path= /orderTraces/**
+            - Path=/orderTraces/**
         - id: message
           uri: http://localhost:8085
           predicates:
@@ -62,7 +62,7 @@ spring:
         - id: ordertrace
           uri: http://ordertrace:8080
           predicates:
-            - Path= /orderTraces/**
+            - Path=/orderTraces/**
         - id: message
           uri: http://message:8080
           predicates:

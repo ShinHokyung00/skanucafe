@@ -34,6 +34,16 @@ public class Payment {
 
     }
 
+    @PrePersist
+    public void onPrePersist(){
+        // try {
+        //     // 결제이력을 저장하기 전 적당한 시간 끌기 (Circuit Breaker)
+        //     Thread.currentThread().sleep((long) (400 + Math.random() * 210));
+        // } catch (InterruptedException e) {
+        //     e.printStackTrace();
+        // }
+    }
+
     public Long getId() {
         return id;
     }
