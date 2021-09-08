@@ -45,7 +45,7 @@ http://labs.msaez.io/#/storming/ByJbvQMAccMKLk9QREWBQ5MCaLU2/a14480f93a393edafa2
 
 
 ### 신규 개발 조직의 추가
-https://user-images.githubusercontent.com/487999/79684133-1d6c4300-826a-11ea-94a2-602e61814ebf.png
+![image](https://user-images.githubusercontent.com/487999/79684133-1d6c4300-826a-11ea-94a2-602e61814ebf.png)
 
 - 마케팅팀의 추가
 ```
@@ -62,7 +62,7 @@ https://user-images.githubusercontent.com/487999/79684133-1d6c4300-826a-11ea-94a
 
 ## 헥사고날 아키텍처 다이어그램 도출
 
-https://user-images.githubusercontent.com/79756040/130914262-ec9dd0ea-0f13-4195-befd-566cb4de2620.png
+![HEXAGONAL2](https://user-images.githubusercontent.com/79756040/130914262-ec9dd0ea-0f13-4195-befd-566cb4de2620.png)
 
 ```
 - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
