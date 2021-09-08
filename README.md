@@ -155,7 +155,47 @@ public class Order {
     }
 }
 ```
+```
+# 결제서비스의 PolicyHandler.java
 
+package skanucafe;
+
+import skanucafe.config.kafka.KafkaProcessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class PolicyHandler{
+    @Autowired PaymentRepository paymentRepository;
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverOrderCancelled_CancelPayment(@Payload OrderCancelled orderCancelled){
+
+        if(!orderCancelled.validate()) return;
+
+        System.out.println("\n\n##### listener CancelPayment : " + orderCancelled.toJson() + "\n\n");
+
+        if ("OrderCancelled".equals(orderCancelled.getStatus())) {
+
+            List<Payment> paymentList = paymentRepository.findByOrderId(orderCancelled.getId());
+
+            for (Payment payment : paymentList) {     
+                    payment.setStatus("PaymentCancelled");
+                    paymentRepository.save(payment);
+            }
+        }
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whatever(@Payload String eventString){}
+
+}
+```
 - Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
 ```
 # Order 서비스의 OrderRepository.java
@@ -172,7 +212,12 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
 ```
 
 - 적용 후 REST API 의 테스트
-![image](https://user-images.githubusercontent.com/44763296/132296759-91ee6282-0610-42f5-8a62-b7a34e0d7c40.png)
+
+- 주문 수행 결과
+
+![image](https://user-images.githubusercontent.com/44763296/132428533-1fcefcd7-f6f3-45fd-ac48-8aa831f1bfec.png)
+
+![image](https://user-images.githubusercontent.com/44763296/132428553-7330bd6b-f40e-4efe-a88e-fd5a9ff71e21.png)
 
 
 ## Gateway 적용
@@ -277,6 +322,7 @@ server:
 			<version>2.4.1</version>
 		</dependency>
 ```
+![image](https://user-images.githubusercontent.com/44763296/132428001-23ed5f28-f8c7-4254-8b7a-49a1be869dbb.png)
 
 
 ## 동기식 호출(Req/Resp 방식)과 Fallback 처리
@@ -297,6 +343,7 @@ public interface PaymentService {
 
 }
 ```
+![image](https://user-images.githubusercontent.com/44763296/132428075-b29a2ac2-6d05-4fd9-ba78-ae3adbc67a15.png)
 
 - 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
 ```
@@ -322,6 +369,7 @@ public interface PaymentService {
     }
     // 이하 생략
 ```
+![image](https://user-images.githubusercontent.com/44763296/132428118-f0ba9392-11aa-4120-817d-719773a2b251.png)
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제(payment) 시스템이 장애가 나면 주문도 못받는다는 것을 확인
 ```
