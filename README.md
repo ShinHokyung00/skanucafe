@@ -824,7 +824,7 @@ api:
 ```
 kubectl create configmap apiurl --from-literal=url=http://payment:8080 --from-literal=fluentd-server-ip=10.xxx.xxx.xxx
 
-kubectl get configmap apiurl -c yaml
+kubectl get configmap apiurl -o yaml
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132354082-61909735-a70b-4d93-b807-f0506d99c19d.png)
 
