@@ -313,15 +313,9 @@ server:
 
 - 배송(delivery) 서비스의 경우, 다른 마이크로 서비스와 달리 hsql을 구현하였다.
 - 이를 통해 서비스 간 다른 종류의 데이터베이스를 사용하여도 문제 없이 동작하여 폴리그랏 퍼시스턴스를 충족함.
-```
-# 배송(delivery) 서비스의 pom.xml
 
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<version>2.4.1</version>
-		</dependency>
-```
+- 배송(delivery) 서비스의 pom.xml
+
 ![image](https://user-images.githubusercontent.com/44763296/132428001-23ed5f28-f8c7-4254-8b7a-49a1be869dbb.png)
 
 
@@ -330,45 +324,15 @@ server:
 - 분석단계에서의 조건 중 하나로 주문(order)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
 - 결제(payment)서비스를 호출하기 위하여 Stub과 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
-```
-# 주문(Order) 서비스의 order/external/PaymentService.java
 
-package skanucafe.external;
+- 주문(Order) 서비스의 order/external/PaymentService.java
 
-@FeignClient(name="payment", url="http://localhost:8088")
-// @FeignClient(name="payment", url="http://payment:8080")
-public interface PaymentService {
-    @RequestMapping(method= RequestMethod.POST, path="/payments")
-    public void approvePayment(@RequestBody Payment payment);
-
-}
-```
 ![image](https://user-images.githubusercontent.com/44763296/132428075-b29a2ac2-6d05-4fd9-ba78-ae3adbc67a15.png)
 
 - 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
-```
-# 주문(Order) 서비스의 Order.java
 
-    @PostPersist
-    public void onPostPersist(){
+- 주문(Order) 서비스의 Order.java
 
-        OrderPlaced orderPlaced = new OrderPlaced();
-        BeanUtils.copyProperties(this, orderPlaced);
-
-        skanucafe.external.Payment payment = new skanucafe.external.Payment();
-        payment.setOrderId(this.getId());
-        payment.setProduct(this.getProduct());
-        payment.setStatus("PaymentApproved");
-        payment.setQty(this.getQty());
-        payment.setCost(this.getCost());
-        OrderApplication.applicationContext.getBean(skanucafe.external.PaymentService.class)
-            .approvePayment(payment);
-        
-        orderPlaced.publishAfterCommit();
-
-    }
-    // 이하 생략
-```
 ![image](https://user-images.githubusercontent.com/44763296/132428118-f0ba9392-11aa-4120-817d-719773a2b251.png)
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제(payment) 시스템이 장애가 나면 주문도 못받는다는 것을 확인
