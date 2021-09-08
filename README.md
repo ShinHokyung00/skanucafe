@@ -781,6 +781,20 @@ logging:
 
 ## Config Map
 
+- order 서비스의 PaymentService.java 에서 FeignClient url 을 configmap 으로 받도록 처리
+```
+# order 서비스의 PaymentService.java
+
+package skanucafe.external;
+
+@FeignClient(name="payment", url="${api.url.payment}")
+public interface PaymentService {
+    @RequestMapping(method= RequestMethod.POST, path="/payments")
+    public void approvePayment(@RequestBody Payment payment);
+
+}
+```
+
 - order 서비스의 application.yml 설정
 ```
 # default 영역
@@ -806,11 +820,6 @@ api:
                   key: url
 ```
 
-- order 서비스의 PaymentService.java
-
-![image](https://user-images.githubusercontent.com/44763296/132358704-8eaf0c83-adae-4da2-8371-cd3874d8397d.png)
-
-
 - config map 생성
 ```
 kubectl create configmap apiurl --from-literal=url=http://payment:8080 --from-literal=fluentd-server-ip=10.xxx.xxx.xxx
@@ -827,7 +836,7 @@ http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="Orde
 ![image](https://user-images.githubusercontent.com/44763296/132356032-c4a819a7-16cd-450f-9fea-0db0a29f607e.png)
 
 
-- 기존 configmap을 삭제. configmap 의 url 을 잘 못된 값으로 수정해서 재생성 및 order 서비스 재배포
+- 기존 configmap을 삭제. configmap 의 url 을 잘 못된 값으로 수정해서 재생성
 ```
 kubectl delete configmap apiurl
 
