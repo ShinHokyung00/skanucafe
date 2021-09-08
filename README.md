@@ -787,7 +787,8 @@ logging:
 api:
   url:
     payment: http://localhost:8082
-....
+
+---
 
 # docker 영역
 api:
@@ -805,7 +806,7 @@ api:
                   key: url
 ```
 
-- PaymentService.java 의 url 설정
+- order 서비스의 PaymentService.java
 
 ![image](https://user-images.githubusercontent.com/44763296/132358704-8eaf0c83-adae-4da2-8371-cd3874d8397d.png)
 
@@ -820,6 +821,7 @@ kubectl get configmap apiurl -c yaml
 
 - 설정한 url로 주문 호출
 ```
+# order 서비스 재배포 후 주문 호출
 http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"    #Success
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132356032-c4a819a7-16cd-450f-9fea-0db0a29f607e.png)
@@ -836,6 +838,7 @@ kubectl create configmap apiurl --from-literal=url=http://paymenttest:8080 --fro
 
 - configmap 수정된 상태에서 주문 호출 오류남을 확인
 ```
+# order 서비스 재배포 후 주문 호출
 http POST http://order:8080/orders product="coffee" qty=1 cost=1000 status="OrderPlaced"    #Fail
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132357874-93c87e1f-6a1a-43ca-b4ff-1fd46548cdd4.png)
@@ -875,11 +878,11 @@ hystrix:
     }
 ```
 
-- 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
-- 동시사용자 50명. 30초 동안 실시
+- siege 툴을 통한 서킷 브레이커 동작 확인 (동시사용자 50명. 30초 동안 실시)
 ```
 siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders POST { "product": "coffee", "qty": 1, "cost" : 1000, "status" : "OrderPlaced"}'
 ```
+
 - 부하 발생하여 CB가 발동하여 요청 실패처리하였고, 밀린 부하가 payment에서 처리되면서 다시 order를 받기 시작
 
 ![image](https://user-images.githubusercontent.com/44763296/132362394-ebe02c83-4a31-4fdc-a0ce-53a4599d1b2c.png)
