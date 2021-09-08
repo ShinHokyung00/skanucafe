@@ -327,13 +327,60 @@ server:
 
 - 주문(Order) 서비스의 order/external/PaymentService.java
 
-![image](https://user-images.githubusercontent.com/44763296/132428075-b29a2ac2-6d05-4fd9-ba78-ae3adbc67a15.png)
+```
+package skanucafe.external;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.util.Date;
+
+// @FeignClient(name="payment", url="http://payment:8080")
+// @FeignClient(name="payment", url="http://localhost:8088")
+@FeignClient(name="payment", url="${api.url.payment}")
+public interface PaymentService {
+    @RequestMapping(method= RequestMethod.POST, path="/payments")
+    public void approvePayment(@RequestBody Payment payment);
+
+}
+```
 
 - 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
 
 - 주문(Order) 서비스의 Order.java
+```
+package skanucafe;
 
-![image](https://user-images.githubusercontent.com/44763296/132428118-f0ba9392-11aa-4120-817d-719773a2b251.png)
+...
+
+@Entity
+@Table(name="Order_table")
+public class Order {
+
+...
+
+    @PostPersist
+    public void onPostPersist(){
+
+        OrderPlaced orderPlaced = new OrderPlaced();
+        BeanUtils.copyProperties(this, orderPlaced);
+
+        skanucafe.external.Payment payment = new skanucafe.external.Payment();
+        payment.setOrderId(this.getId());
+        payment.setProduct(this.getProduct());
+        payment.setStatus("PaymentApproved");
+        payment.setQty(this.getQty());
+        payment.setCost(this.getCost());
+        OrderApplication.applicationContext.getBean(skanucafe.external.PaymentService.class)
+            .approvePayment(payment);
+        
+        orderPlaced.publishAfterCommit();
+
+    }
+```
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제(payment) 시스템이 장애가 나면 주문도 못받는다는 것을 확인
 ```
@@ -357,8 +404,6 @@ http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="Ord
 ```
 
 ![image](https://user-images.githubusercontent.com/44763296/132333938-b6de8d15-c8b7-4c35-9896-f633a97ef6e3.png)
-
-
 
 - 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
 
@@ -422,7 +467,7 @@ http post http://localhost:8088/orders product="coffee" qty=1 cost=1000 status="
 http post http://localhost:8088/orders product="tea" qty=2 cost=2000 status="OrderPlaced"      #Success
 
 #주문상태 확인
-http localhost:8080/orderTraces     # 주문상태 배송시작으로 안바뀜 확인
+http localhost:8080/orderTraces/1     # 주문상태 배송시작으로 안바뀜 확인
 ```
 
 ![image](https://user-images.githubusercontent.com/44763296/132334856-d35db031-6758-4a08-9532-0c0cc3c47903.png)
@@ -434,7 +479,7 @@ cd delivery
 mvn spring-boot:run
 
 #주문상태 확인
-http localhost:8080/orderTraces     # 모든 주문의 상태가 "DeliveryStarted"으로 확인
+http localhost:8080/orderTraces/1     # 모든 주문의 상태가 "DeliveryStarted"으로 확인
 ```
 
 ![image](https://user-images.githubusercontent.com/44763296/132334787-668cc0e5-ade6-4a68-90d2-617560cfc358.png)
