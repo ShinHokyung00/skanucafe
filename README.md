@@ -752,8 +752,8 @@ kubectl apply -f pvc.xml
 ```
 ![image](https://user-images.githubusercontent.com/44763296/132337213-50718ac7-2a70-4fdd-a663-6ab41d90baf1.png)
 
+- order 서비스의 deploymeny.yml 설정
 ```
-# order 서비스의 deploymeny.yml 설정
           volumeMounts:
             - name: volume
               mountPath: "/mnt/azure"
